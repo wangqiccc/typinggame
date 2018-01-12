@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: url(bg.jpeg);
+            background-size: auto 110%;
+        }
+
+        .menu {
+            width: 100%;
+            height: 50px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.67);
+            z-index: 99;
+            line-height: 50px;
+            color: greenyellow;
+        }
+
+        .scene {
+            width: 1000px;
+            height: 100%;
+            background: url(bg.jpeg);
+            background-size: auto 110%;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 0 15px #000;
+            background-clip: padding-box;
+            overflow: hidden;
+        }
+
+        .control, .message {
+            width: 300px;
+            height: 100px;
+            background: rgba(250, 250, 250, 0.58);
+            position: fixed;
+            left: calc(50% - 150px);
+            top: calc(50% - 50px);
+            z-index: 99;
+            border: 10px solid #838dff;
+            border-radius: 30px;
+        }
+
+        .btn {
+            width: 180px;
+            height: 40px;
+            text-align: center;
+            line-height: 40px;
+            cursor: pointer;
+            margin: 30px auto;
+            font-size: 16px;
+            color: #fff;
+            background: #838dff;
+            border-radius: 20px;
+        }
+
+        .btn:active {
+            box-shadow: 0 0 5px #000;
+        }
+
+        .letter {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            line-height: 50px;
+            font-size: 12px;
+            color: #676767;
+            position: absolute;
+            border-radius: 50%;
+            background: #ffcf2c;
+            font-weight: bold;
+            text-shadow: 0 0 5px gold;
+            box-shadow: 0 0 15px 10px #ffbb3a;
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0);
+                box-shadow: 0 0 0px 0px #ffbb3a;
+                opacity: 0;
+            }
+            50% {
+                transform: rotate(540);
+                box-shadow: 0 0 15px 15px #ffbb3a;
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(1080deg);
+                box-shadow: 0 0 30px 30px #ffbb3a;
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .fadeOut {
+            animation: fadeOut .5s linear;
+        }
+
+        .message {
+            display: none;
+        }
+
+        .message p {
+            text-align: center;
+            padding: 15px 0;
+        }
+
+        .restart {
+            margin: 0 auto !important;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .fadeIn {
+            animation: fadeIn .5s linear;
+            display: block;
+
+        }
+
+        .weapon {
+            width: 6px;
+            height: 6px;
+            background: #f9fbff;
+            position: fixed;
+            left: 500px;
+            bottom: 0;
+            transition: all .3s ease-in;
+            border-radius: 50%;
+            box-shadow: 0 0 5px #fff;
+        }
+        @keyframes explode {
+            0%{
+                background:#ffbb3a;
+                 box-shadow:0 0 0 0 red;
+            }
+            100%{
+                background:red;
+                box-shadow:0 0 100px 50px red;
+            }
+        }
+        .explode{
+            animation: explode 1s ease-in!important;
+        }
+        /* amimate.css */
+    </style>
+</head>
+<body>
+<div class="menu">
+    <div class="state">
+        <span>关卡</span><span class="statenum">1</span>
+    </div>
+    <div class="life">
+        <span>生命</span><span class="lifenum">5</span>
+    </div>
+    <div class="scor">
+        <span>得分</span><span class="scornum">0</span>
+    </div>
+</div>
+<div class="control">
+    <div class="start btn">开始</div>
+</div>
+<div class="message">
+    <p>得分: <span>0</span></p>
+    <div class="restart btn">重新开始</div>
+</div>
+<div class="scene"></div>
+</body>
+<script>
+    class Game {
+        constructor() {
+            this.scor=0;
+            this.life=5;
+            this.state=1;
+            this.speed=5;
+            this.num=3;
+            this.obj={};
+            this.st=null;
+            this.scene=document.querySelector(".scene");
+            this.control=document.querySelector(".control");
+            this.startBtn=document.querySelector(".start");
+            this.statenum=document.querySelector(".statenum");
+            this.lifenum=document.querySelector(".lifenum");
+            this.scornum=document.querySelector(".scornum");
+            this.message=document.querySelector('.message');
+            this.finalScor=document.querySelector('.message span');
+            this.restartBtn=document.querySelector('.restart');
+            this.init();
+        }
+
+        init() {
+            this.play();
+            this.keydown();
+            this.restart();
+        }
+
+        play() {
+            this.startBtn.onclick=() => {
+                this.control.classList.add("fadeOut");
+                for (let i=0; i < this.num; i++) {
+                    this.createLetter();
+                }
+                this.move();
+            };
+            this.control.addEventListener("animationend", function () {
+                this.style.display="none";
+            })
+        }
+
+        createLetter() {
+            let newdiv=document.createElement("div");
+            newdiv.className="letter";
+            let n=Math.random()*10+20;
+            newdiv.style.width=n+"px";
+            newdiv.style.height=n+"px";
+            newdiv.style.lineHeight=n+"px";
+
+            let randomNum, randomLetter;
+            do {
+                randomNum=Math.floor(Math.random() * 26) + 65;
+                randomLetter=String.fromCharCode(randomNum);
+            } while (this.obj[randomLetter]);
+            newdiv.innerHTML=randomLetter;
+            let randomTop;
+            do {
+                randomTop=Math.random() * (window.innerHeight - 200)+100;
+            } while (this.checkPos(randomTop));
+            let randomLeft=-Math.random() * 400 - 200;
+            this.obj[randomLetter]={randomLeft, randomTop, el: newdiv};
+            newdiv.style.left=randomLeft + "px";
+            newdiv.style.top=randomTop + "px";
+            this.scene.appendChild(newdiv);
+        }
+
+        checkPos(top) {
+            for (let i in this.obj) {
+                if (top > this.obj[i].randomTop - 100 && top < this.obj[i].randomTop + 100) {
+                    return true;
+                }
+            }
+        }
+
+        move() {
+            this.st=setInterval(function () {
+                for (let i in this.obj) {
+                    let left=this.obj[i].randomLeft;
+                    left+=this.speed;
+                    this.obj[i].randomLeft=left;
+                    this.obj[i].el.style.left=left + "px";
+                    if (this.obj[i].randomLeft > 1000) {
+                        this.scene.removeChild(this.obj[i].el);
+                        delete this.obj[i];
+                        this.createLetter();
+                        this.life--;
+                        this.lifenum.innerHTML=this.life;
+                        if (this.life === 0) {
+                            clearInterval(this.st);
+                            this.finalScor.innerHTML=this.scor;
+                            this.message.classList.add("fadeIn");
+                        }
+                    }
+                }
+            }.bind(this), 30);
+        }
+
+        keydown() {
+            let that=this;
+            let flag=true;
+            document.onkeydown=function (e) {
+                let kc=e.keyCode;
+                if (kc === 32) {
+                    if (flag) {
+                        clearInterval(that.st);
+                    } else {
+                        that.move();
+                    }
+                    flag= !flag;
+                }
+                if (!flag) {
+                    return;
+                }
+                let letter=String.fromCharCode(kc);
+                if (that.obj[letter]) {
+                    let bullet=document.createElement("div");
+                    bullet.classList.add("weapon");
+                    that.scene.appendChild(bullet);
+                    setTimeout(function () {
+                        bullet.style.left=that.obj[letter].randomLeft + that.speed * 20 + 150 + "px";
+                        bullet.style.bottom=window.innerHeight - that.obj[letter].randomTop - 50 + "px";
+                    }, 0)
+                    that.obj[letter].el.style.animation="none";
+                    that.obj[letter].el.style.boxShadow="-5px 0 10px 5px #ffbb3a";
+                    let st=setInterval(function () {
+                        let left=that.obj[letter].randomLeft;
+                        left+=5;
+                        that.obj[letter].randomLeft=left;
+                        that.obj[letter].left=left + "px";
+                    }, 30);
+                    bullet.addEventListener("transitionend", () => {
+                        clearInterval(st);
+                        that.scene.removeChild(bullet);
+                        that.obj[letter].el.classList.add("explode");
+                        that.obj[letter].el.innerHTML="";
+                        that.obj[letter].el.style.boxShadow="";
+                        setTimeout(() => {
+                            that.scene.removeChild(that.obj[letter].el);
+                            delete that.obj[letter];
+                            that.createLetter();
+                            that.scor++;
+                            that.scornum.innerHTML=that.scor;
+                            if (that.scor % 10 === 0) {
+                                that.state++;
+                                that.statenum.innerHTML=that.state;
+                                that.speed+=1;
+                            }
+                        }, 1000)
+                    })
+                }
+            }
+        }
+
+        restart() {
+            this.restartBtn.onclick=function () {
+                this.message.classList.remove("fadeIn");
+                this.scor=0;
+                this.scornum.innerHTML=0;
+                this.life=5;
+                this.lifenum.innerHTML=5;
+                this.state=1;
+                this.statenum.innerHTML=1;
+                this.speed=5;
+                this.num=3;
+                this.obj={};
+                this.st=null;
+                this.scene.innerHTML="";
+                for (let i=0; i < this.num; i++) {
+                    this.createLetter();
+                }
+                this.move();
+            }.bind(this)
+        }
+    }
+    new Game();
+</script>
+</html>
