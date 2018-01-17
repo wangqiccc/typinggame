@@ -49,7 +49,6 @@
 
         .control, .message {
             width: 300px;
-            height: 100px;
             background: rgba(250, 250, 250, 0.58);
             position: fixed;
             left: calc(50% - 150px);
@@ -57,6 +56,7 @@
             z-index: 99;
             border: 10px solid #838dff;
             border-radius: 30px;
+            padding: 10px;
         }
 
         .btn {
@@ -65,7 +65,7 @@
             text-align: center;
             line-height: 40px;
             cursor: pointer;
-            margin: 30px auto;
+            margin: 0 auto;
             font-size: 16px;
             color: #fff;
             background: #838dff;
@@ -81,7 +81,7 @@
             height: 50px;
             text-align: center;
             line-height: 50px;
-            font-size: 12px;
+            font-size: 16px;
             color: #676767;
             position: absolute;
             border-radius: 50%;
@@ -92,6 +92,15 @@
             animation: rotate 10s linear infinite;
         }
 
+        @keyframes rotatein {
+            0% {
+                transform: rotate(0);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
         @keyframes rotate {
             0% {
                 transform: rotate(0);
@@ -99,7 +108,7 @@
                 opacity: 0;
             }
             50% {
-                transform: rotate(540);
+                transform: rotate(540deg);
                 box-shadow: 0 0 15px 15px #ffbb3a;
                 opacity: 1;
             }
@@ -162,20 +171,33 @@
             border-radius: 50%;
             box-shadow: 0 0 5px #fff;
         }
+
         @keyframes explode {
-            0%{
-                background:#ffbb3a;
-                 box-shadow:0 0 0 0 red;
+            0% {
+                background: #ffbb3a;
+                box-shadow: 0 0 0 0 red;
             }
-            100%{
-                background:red;
-                box-shadow:0 0 100px 50px red;
+            100% {
+                background: red;
+                box-shadow: 0 0 100px 50px red;
             }
         }
-        .explode{
-            animation: explode 1s ease-in!important;
+
+        .explode {
+            animation: explode 1s ease-in !important;
         }
+
         /* amimate.css */
+        @keyframes exb {
+            0% {
+                bottom: 0;
+                opacity: 1;
+            }
+            100% {
+                bottom: 300px;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -189,12 +211,17 @@
     <div class="scor">
         <span>得分</span><span class="scornum">0</span>
     </div>
+    <div class="exb">
+        <span>二向箔数量</span><span class="exbnum">3</span>
+    </div>
 </div>
 <div class="control">
+    <p>你是黑暗丛林中的猎人 目标是消灭每一个暴露的文明...</p>
     <div class="start btn">开始</div>
+    <p>按下对应字母发射光粒<br/>按下空格停止宇宙时间 <br/>按下确定键发射二向箔</p>
 </div>
 <div class="message">
-    <p>得分: <span>0</span></p>
+    <p>共消灭了 <span>0</span>个文明</p>
     <div class="restart btn">重新开始</div>
 </div>
 <div class="scene"></div>
@@ -206,6 +233,7 @@
             this.life=5;
             this.state=1;
             this.speed=5;
+            this.exb=3;
             this.num=3;
             this.obj={};
             this.st=null;
@@ -215,6 +243,7 @@
             this.statenum=document.querySelector(".statenum");
             this.lifenum=document.querySelector(".lifenum");
             this.scornum=document.querySelector(".scornum");
+            this.exbnum=document.querySelector(".exbnum");
             this.message=document.querySelector('.message');
             this.finalScor=document.querySelector('.message span');
             this.restartBtn=document.querySelector('.restart');
@@ -223,8 +252,12 @@
 
         init() {
             this.play();
-            this.keydown();
             this.restart();
+            let n=0;
+            setInterval(function () {
+                n--;
+                this.scene.style.backgroundPosition=`${n}px 0`;
+            }.bind(this), 30)
         }
 
         play() {
@@ -233,6 +266,7 @@
                 for (let i=0; i < this.num; i++) {
                     this.createLetter();
                 }
+                this.keydown();
                 this.move();
             };
             this.control.addEventListener("animationend", function () {
@@ -243,10 +277,10 @@
         createLetter() {
             let newdiv=document.createElement("div");
             newdiv.className="letter";
-            let n=Math.random()*10+20;
-            newdiv.style.width=n+"px";
-            newdiv.style.height=n+"px";
-            newdiv.style.lineHeight=n+"px";
+            let n=Math.random() * 60 + 20;
+            newdiv.style.width=n + "px";
+            newdiv.style.height=n + "px";
+            newdiv.style.lineHeight=n + "px";
 
             let randomNum, randomLetter;
             do {
@@ -256,7 +290,7 @@
             newdiv.innerHTML=randomLetter;
             let randomTop;
             do {
-                randomTop=Math.random() * (window.innerHeight - 200)+100;
+                randomTop=Math.random() * (window.innerHeight - 200) + 100;
             } while (this.checkPos(randomTop));
             let randomLeft=-Math.random() * 400 - 200;
             this.obj[randomLetter]={randomLeft, randomTop, el: newdiv};
@@ -280,7 +314,7 @@
                     left+=this.speed;
                     this.obj[i].randomLeft=left;
                     this.obj[i].el.style.left=left + "px";
-                    if (this.obj[i].randomLeft > 1000) {
+                    if (this.obj[i].randomLeft > 1500) {
                         this.scene.removeChild(this.obj[i].el);
                         delete this.obj[i];
                         this.createLetter();
@@ -290,6 +324,7 @@
                             clearInterval(this.st);
                             this.finalScor.innerHTML=this.scor;
                             this.message.classList.add("fadeIn");
+                            this.flag=false;
                         }
                     }
                 }
@@ -298,19 +333,59 @@
 
         keydown() {
             let that=this;
-            let flag=true;
+            this.flag=true;
             document.onkeydown=function (e) {
                 let kc=e.keyCode;
                 if (kc === 32) {
-                    if (flag) {
+                    if (that.flag) {
                         clearInterval(that.st);
                     } else {
                         that.move();
                     }
-                    flag= !flag;
+                    that.flag= !that.flag;
                 }
-                if (!flag) {
+                if (!that.flag) {
                     return;
+                }
+                if (kc === 13) {
+                    let newdiv=document.createElement("div");
+                    if (that.exb > 0) {
+                        that.exb--;
+                        that.exbnum.innerHTML=that.exb;
+                        newdiv.style.cssText=`
+                      width:20px;
+                      height:30px;
+                      background:#fff;
+                      position:absolute;
+                      left:50%;
+                      marign-left:-25px;
+                      bottom:0;
+                      box-shadow:0 0 5px #fff;
+                      opacity:1;
+                      animation:exb 1s linear;
+                    `;
+                        that.scene.appendChild(newdiv);
+                        newdiv.addEventListener("animationend", function () {
+                            that.scene.removeChild(this);
+                            for (let i in that.obj) {
+                                that.obj[i].el.classList.add("explode");
+                                that.obj[i].el.innerHTML="";
+                                setTimeout(() => {
+                                    that.scene.removeChild(that.obj[i].el);
+                                    delete that.obj[i];
+                                    that.createLetter();
+                                    that.scor++;
+                                    that.scornum.innerHTML=that.scor;
+                                    if (that.scor % 10 === 0) {
+                                        that.state++;
+                                        that.statenum.innerHTML=that.state;
+                                        that.speed+=1;
+                                    }
+                                }, 1000)
+                            }
+                        });
+                        return;
+                    }
                 }
                 let letter=String.fromCharCode(kc);
                 if (that.obj[letter]) {
@@ -320,7 +395,7 @@
                     setTimeout(function () {
                         bullet.style.left=that.obj[letter].randomLeft + that.speed * 20 + 150 + "px";
                         bullet.style.bottom=window.innerHeight - that.obj[letter].randomTop - 50 + "px";
-                    }, 0)
+                    }, 0);
                     that.obj[letter].el.style.animation="none";
                     that.obj[letter].el.style.boxShadow="-5px 0 10px 5px #ffbb3a";
                     let st=setInterval(function () {
@@ -363,6 +438,8 @@
                 this.statenum.innerHTML=1;
                 this.speed=5;
                 this.num=3;
+                this.exb=3;
+                this.exbnum.innerHTML=3;
                 this.obj={};
                 this.st=null;
                 this.scene.innerHTML="";
